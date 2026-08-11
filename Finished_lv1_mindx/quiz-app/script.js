@@ -75,7 +75,7 @@ function renderQuestion() {
     if (currentQuestionIndex === questions.length - 1) {
         nextButton.textContent = "Kết thúc";
     } else {
-        nextButton.textContent = "Câu tiếp theo (Test change)";
+        nextButton.textContent = "Câu tiếp theo";
     }
 
     for (let i = 0; i < currentQuestion.options.length; i++) {

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game xếp hình</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="game-container">
+        <h1>Game xếp hình</h1>
+
+        <button class="start-button" id="start-button" type="button">
+            Bắt đầu
+        </button>
+
+        <section class="game-area">
+            <!-- Các ô xếp hình sẽ được JavaScript tạo từ mảng board. -->
+            <div class="board" id="game-board"></div>
+
+            <aside class="game-sidebar">
+                <div class="timer-card">
+                    <h2>Đồng hồ</h2>
+                    <p id="timer">00:00</p>
+                </div>
+
+                <div class="guide-card">
+                    <h2>Hướng dẫn di chuyển</h2>
+
+                    <div class="arrow-keys" aria-label="Các phím mũi tên">
+                        <span class="key arrow-up">↑</span>
+                        <span class="key">←</span>
+                        <span class="key">↓</span>
+                        <span class="key">→</span>
+                    </div>
+
+                    <div class="letter-keys" aria-label="Các phím WASD">
+                        <span class="key key-w">W</span>
+                        <span class="key">A</span>
+                        <span class="key">S</span>
+                        <span class="key">D</span>
+                    </div>
+                </div>
+
+                <div class="move-card">
+                    <h2>Bước đi</h2>
+                    <p id="move-count">0</p>
+                </div>
+            </aside>
+        </section>
+
+        <p class="win-message" id="win-message" hidden>YOU WIN!</p>
+
+        <section class="history-section">
+            <h2>Lịch sử lượt chơi</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Bước đi</th>
+                            <th scope="col">Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

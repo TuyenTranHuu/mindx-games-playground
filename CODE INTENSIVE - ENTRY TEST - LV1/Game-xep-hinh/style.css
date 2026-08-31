@@ -28,6 +28,76 @@ h1 {
     text-align: center;
 }
 
+.player-panel,
+.recovery-card {
+    max-width: 540px;
+    margin: 0 auto 16px;
+    padding: 12px 14px;
+    border-radius: 7px;
+    background-color: #f0fdf4;
+}
+
+.player-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.player-panel > div {
+    margin-right: auto;
+}
+
+.player-label {
+    display: block;
+    margin-bottom: 3px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.player-panel button,
+.recovery-card button {
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 5px;
+    background-color: #15803d;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.player-panel button:disabled,
+.start-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.api-message {
+    min-height: 18px;
+    margin: -7px 0 12px;
+    color: #b91c1c;
+    font-size: 13px;
+    text-align: center;
+}
+
+.recovery-card {
+    border: 1px solid #86efac;
+    text-align: center;
+}
+
+.recovery-card p {
+    margin: 6px 0;
+    font-size: 13px;
+}
+
+.recovery-card code {
+    display: block;
+    margin: 9px 0;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #ffffff;
+    overflow-wrap: anywhere;
+}
+
 .start-button {
     display: block;
     min-width: 92px;

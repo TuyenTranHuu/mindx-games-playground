@@ -10,7 +10,25 @@
     <main class="game-container">
         <h1>Game xếp hình</h1>
 
-        <button class="start-button" id="start-button" type="button">
+        <section class="player-panel" aria-label="Thông tin người chơi">
+            <div>
+                <span class="player-label">Người chơi</span>
+                <strong id="player-name">Đang kết nối...</strong>
+            </div>
+            <button id="change-name-button" type="button" disabled>Đổi biệt danh</button>
+            <button id="recover-player-button" type="button">Khôi phục hồ sơ</button>
+        </section>
+
+        <p class="api-message" id="api-message" role="status"></p>
+
+        <section class="recovery-card" id="recovery-card" hidden>
+            <strong>Hãy lưu mã khôi phục này</strong>
+            <p>Mã chỉ được hiển thị một lần và giúp bạn mở hồ sơ trên thiết bị khác.</p>
+            <code id="recovery-code"></code>
+            <button id="copy-recovery-button" type="button">Sao chép mã</button>
+        </section>
+
+        <button class="start-button" id="start-button" type="button" disabled>
             Bắt đầu
         </button>
 
@@ -60,6 +78,7 @@
                             <th scope="col">#</th>
                             <th scope="col">Bước đi</th>
                             <th scope="col">Thời gian</th>
+                            <th scope="col">Trạng thái</th>
                         </tr>
                     </thead>
                     <tbody id="history-body"></tbody>

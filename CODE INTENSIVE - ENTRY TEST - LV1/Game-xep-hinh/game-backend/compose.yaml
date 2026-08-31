@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: puzzle_game
+      POSTGRES_USER: puzzle_user
+      POSTGRES_PASSWORD: puzzle_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - puzzle_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U puzzle_user -d puzzle_game"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  puzzle_postgres_data:

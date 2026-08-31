@@ -1,152 +1,80 @@
-// Mảng board lưu trạng thái của 12 ô trên bàn cờ.
-// Số 0 đại diện cho ô đen.
-let board = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0];
+const API_BASE_URL = localStorage.getItem("puzzleApiUrl") || "http://localhost:8080/api";
+const DEVICE_TOKEN_KEY = "puzzleDeviceToken";
+const ACCESS_TOKEN_KEY = "puzzleAccessToken";
 
-// Các biến lưu trạng thái hiện tại của lượt chơi.
+let board = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0];
 let isPlaying = false;
 let moveCount = 0;
 let elapsedSeconds = 0;
 let timerId = null;
-let gameHistory = [];
+let currentGameId = null;
+let currentMoves = [];
 
-// Tìm vùng bàn cờ trong HTML để JavaScript có thể tạo các ô bên trong.
 const gameBoard = document.getElementById("game-board");
 const startButton = document.getElementById("start-button");
 const moveCountText = document.getElementById("move-count");
 const winMessage = document.getElementById("win-message");
 const timerText = document.getElementById("timer");
 const historyBody = document.getElementById("history-body");
+const playerName = document.getElementById("player-name");
+const changeNameButton = document.getElementById("change-name-button");
+const recoverPlayerButton = document.getElementById("recover-player-button");
+const apiMessage = document.getElementById("api-message");
+const recoveryCard = document.getElementById("recovery-card");
+const recoveryCode = document.getElementById("recovery-code");
+const copyRecoveryButton = document.getElementById("copy-recovery-button");
 
-// Hàm này đọc mảng board và hiển thị các ô lên giao diện.
 function renderBoard() {
-    // Xóa giao diện cũ trước khi vẽ lại để các ô không bị lặp.
     gameBoard.innerHTML = "";
-
-    // Duyệt lần lượt tất cả phần tử trong mảng board.
     for (let i = 0; i < board.length; i++) {
         const tileValue = board[i];
         const tile = document.createElement("div");
-
         tile.classList.add("tile");
-
         if (tileValue === 0) {
-            // Nếu giá trị là 0, tạo ô đen và không hiển thị số 0.
             tile.classList.add("empty-tile");
         } else {
-            // Mỗi số được thêm class riêng để nhận đúng màu trong CSS.
             tile.classList.add(`tile-${tileValue}`);
             tile.textContent = tileValue;
         }
-
         gameBoard.appendChild(tile);
     }
 }
 
-// Thay đổi mảng board theo một hướng và trả về kết quả có di chuyển được không.
 function changeBoardPosition(direction) {
     const emptyIndex = board.indexOf(0);
     const emptyRow = Math.floor(emptyIndex / 4);
     const emptyColumn = emptyIndex % 4;
     let targetIndex = emptyIndex;
-
-    if (direction === "up" && emptyRow > 0) {
-        targetIndex = emptyIndex - 4;
-    } else if (direction === "down" && emptyRow < 2) {
-        targetIndex = emptyIndex + 4;
-    } else if (direction === "left" && emptyColumn > 0) {
-        targetIndex = emptyIndex - 1;
-    } else if (direction === "right" && emptyColumn < 3) {
-        targetIndex = emptyIndex + 1;
-    }
-
-    // Nếu targetIndex không đổi thì ô đen đang ở biên và không thể đi tiếp.
-    if (targetIndex === emptyIndex) {
-        return false;
-    }
-
-    // Đổi chỗ ô đen và ô nằm ở hướng di chuyển.
+    if (direction === "up" && emptyRow > 0) targetIndex = emptyIndex - 4;
+    else if (direction === "down" && emptyRow < 2) targetIndex = emptyIndex + 4;
+    else if (direction === "left" && emptyColumn > 0) targetIndex = emptyIndex - 1;
+    else if (direction === "right" && emptyColumn < 3) targetIndex = emptyIndex + 1;
+    if (targetIndex === emptyIndex) return false;
     board[emptyIndex] = board[targetIndex];
     board[targetIndex] = 0;
-
     return true;
 }
 
-// Di chuyển ô đen khi người chơi nhấn phím.
 function moveEmptyTile(direction) {
-    if (!isPlaying) {
-        return;
-    }
-
-    const hasMoved = changeBoardPosition(direction);
-
-    if (!hasMoved) {
-        return;
-    }
-
+    if (!isPlaying || !changeBoardPosition(direction)) return;
+    currentMoves.push(direction);
     moveCount++;
     moveCountText.textContent = moveCount;
     renderBoard();
     checkWin();
 }
 
-// Kiểm tra bàn cờ có đang ở đúng thứ tự chiến thắng hay không.
 function isBoardSolved() {
     const solvedBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0];
-
-    for (let i = 0; i < solvedBoard.length; i++) {
-        if (board[i] !== solvedBoard[i]) {
-            return false;
-        }
-    }
-
-    return true;
+    return solvedBoard.every(function (value, index) {
+        return board[index] === value;
+    });
 }
 
-// Trộn bằng 100 bước hợp lệ nên bàn cờ sau khi trộn luôn có thể giải được.
-function shuffleBoard() {
-    const solvedBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0];
-
-    do {
-        // Mỗi lần thử trộn đều bắt đầu từ trạng thái chiến thắng.
-        board = [...solvedBoard];
-
-        for (let shuffleCount = 0; shuffleCount < 100; shuffleCount++) {
-            const emptyIndex = board.indexOf(0);
-            const emptyRow = Math.floor(emptyIndex / 4);
-            const emptyColumn = emptyIndex % 4;
-            const validDirections = [];
-
-            if (emptyRow > 0) {
-                validDirections.push("up");
-            }
-
-            if (emptyRow < 2) {
-                validDirections.push("down");
-            }
-
-            if (emptyColumn > 0) {
-                validDirections.push("left");
-            }
-
-            if (emptyColumn < 3) {
-                validDirections.push("right");
-            }
-
-            const randomIndex = Math.floor(Math.random() * validDirections.length);
-            const randomDirection = validDirections[randomIndex];
-            changeBoardPosition(randomDirection);
-        }
-    } while (isBoardSolved());
-}
-
-// Chuyển tổng số giây thành định dạng phút:giây, ví dụ 65 thành 01:05.
 function formatTime(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    const formattedMinutes = String(minutes).padStart(2, "0");
-    const formattedSeconds = String(seconds).padStart(2, "0");
-
-    return `${formattedMinutes}:${formattedSeconds}`;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function stopTimer() {
@@ -157,112 +85,211 @@ function stopTimer() {
 }
 
 function startTimer() {
-    // Luôn dừng interval cũ trước khi tạo interval mới.
     stopTimer();
-
     timerId = setInterval(function () {
         elapsedSeconds++;
         timerText.textContent = formatTime(elapsedSeconds);
     }, 1000);
 }
 
-function renderHistory() {
-    historyBody.innerHTML = "";
+async function apiRequest(path, options = {}, canRetry = true) {
+    const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
 
-    for (let i = 0; i < gameHistory.length; i++) {
-        const historyItem = gameHistory[i];
-        const row = document.createElement("tr");
+    if (response.status === 401 && canRetry && localStorage.getItem(DEVICE_TOKEN_KEY)) {
+        await refreshAccessToken();
+        return apiRequest(path, options, false);
+    }
 
-        row.innerHTML = `
-            <td>${i + 1}</td>
-            <td>${historyItem.moves}</td>
-            <td>${historyItem.time}</td>
-        `;
+    if (!response.ok) {
+        const error = await response.json().catch(function () { return {}; });
+        throw new Error(error.message || "Không thể kết nối với máy chủ");
+    }
+    if (response.status === 204) return null;
+    return response.json();
+}
 
-        historyBody.appendChild(row);
+async function refreshAccessToken() {
+    const deviceToken = localStorage.getItem(DEVICE_TOKEN_KEY);
+    const response = await fetch(`${API_BASE_URL}/players/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceToken })
+    });
+    if (!response.ok) {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(DEVICE_TOKEN_KEY);
+        throw new Error("Phiên đăng nhập đã hết hạn");
+    }
+    const data = await response.json();
+    localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+}
+
+async function initializePlayer() {
+    try {
+        const deviceToken = localStorage.getItem(DEVICE_TOKEN_KEY);
+        const data = await apiRequest("/players/anonymous", {
+            method: "POST",
+            body: JSON.stringify({ deviceToken })
+        }, false);
+        localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+        if (data.deviceToken) localStorage.setItem(DEVICE_TOKEN_KEY, data.deviceToken);
+        playerName.textContent = data.nickname;
+        startButton.disabled = false;
+        changeNameButton.disabled = false;
+        apiMessage.textContent = "";
+        if (data.recoveryCode) {
+            recoveryCode.textContent = data.recoveryCode;
+            recoveryCard.hidden = false;
+        }
+        await loadHistory();
+    } catch (error) {
+        if (localStorage.getItem(DEVICE_TOKEN_KEY)) {
+            localStorage.removeItem(DEVICE_TOKEN_KEY);
+            localStorage.removeItem(ACCESS_TOKEN_KEY);
+            return initializePlayer();
+        }
+        apiMessage.textContent = `${error.message}. Hãy kiểm tra Backend tại ${API_BASE_URL}.`;
     }
 }
 
-function addHistory() {
-    const newHistoryItem = {
-        moves: moveCount,
-        time: formatTime(elapsedSeconds)
-    };
+async function loadHistory() {
+    const data = await apiRequest("/games/history?page=0&size=20");
+    historyBody.innerHTML = "";
+    data.items.forEach(function (item, index) {
+        const row = document.createElement("tr");
+        const numberCell = document.createElement("td");
+        const moveCell = document.createElement("td");
+        const timeCell = document.createElement("td");
+        const statusCell = document.createElement("td");
+        numberCell.textContent = index + 1;
+        moveCell.textContent = item.moveCount;
+        timeCell.textContent = formatTime(item.elapsedSeconds);
+        statusCell.textContent = item.status;
+        row.append(numberCell, moveCell, timeCell, statusCell);
+        historyBody.appendChild(row);
+    });
+}
 
-    gameHistory.push(newHistoryItem);
-    renderHistory();
+async function startGame() {
+    startButton.disabled = true;
+    apiMessage.textContent = "Đang tạo lượt chơi...";
+    try {
+        const game = await apiRequest("/games", { method: "POST" });
+        currentGameId = game.id;
+        board = game.board;
+        currentMoves = [];
+        moveCount = 0;
+        elapsedSeconds = 0;
+        moveCountText.textContent = "0";
+        timerText.textContent = "00:00";
+        winMessage.hidden = true;
+        renderBoard();
+        isPlaying = true;
+        startButton.textContent = "Kết thúc";
+        startTimer();
+        apiMessage.textContent = "";
+    } catch (error) {
+        apiMessage.textContent = error.message;
+    } finally {
+        startButton.disabled = false;
+    }
+}
+
+async function finishGame(result) {
+    if (!currentGameId) return;
+    isPlaying = false;
+    stopTimer();
+    startButton.disabled = true;
+    try {
+        await apiRequest(`/games/${currentGameId}/finish`, {
+            method: "POST",
+            body: JSON.stringify({ result, moves: currentMoves })
+        });
+        if (result === "won") {
+            winMessage.hidden = false;
+            startButton.textContent = "Chơi lại";
+        } else {
+            startButton.textContent = "Bắt đầu";
+        }
+        currentGameId = null;
+        await loadHistory();
+        apiMessage.textContent = "";
+    } catch (error) {
+        apiMessage.textContent = error.message;
+        startButton.textContent = "Bắt đầu";
+    } finally {
+        startButton.disabled = false;
+    }
 }
 
 function checkWin() {
-    if (!isPlaying || !isBoardSolved()) {
-        return;
-    }
-
-    isPlaying = false;
-    stopTimer();
-    winMessage.hidden = false;
-    startButton.textContent = "Chơi lại";
-    addHistory();
+    if (isPlaying && isBoardSolved()) finishGame("won");
 }
 
-function startGame() {
-    stopTimer();
-    moveCount = 0;
-    elapsedSeconds = 0;
-    moveCountText.textContent = moveCount;
-    timerText.textContent = formatTime(elapsedSeconds);
-    winMessage.hidden = true;
-
-    shuffleBoard();
-    renderBoard();
-
-    isPlaying = true;
-    startButton.textContent = "Kết thúc";
-    startTimer();
-}
-
-function endGame() {
-    isPlaying = false;
-    stopTimer();
-    startButton.textContent = "Bắt đầu";
-}
-
-// Đổi tên phím người dùng nhấn thành bốn hướng mà game sử dụng.
 function getDirectionFromKey(key) {
     const pressedKey = key.toLowerCase();
-
-    if (pressedKey === "w" || pressedKey === "arrowup") {
-        return "up";
-    } else if (pressedKey === "s" || pressedKey === "arrowdown") {
-        return "down";
-    } else if (pressedKey === "a" || pressedKey === "arrowleft") {
-        return "left";
-    } else if (pressedKey === "d" || pressedKey === "arrowright") {
-        return "right";
-    }
-
+    if (pressedKey === "w" || pressedKey === "arrowup") return "up";
+    if (pressedKey === "s" || pressedKey === "arrowdown") return "down";
+    if (pressedKey === "a" || pressedKey === "arrowleft") return "left";
+    if (pressedKey === "d" || pressedKey === "arrowright") return "right";
     return null;
 }
 
 startButton.addEventListener("click", function () {
-    if (isPlaying) {
-        endGame();
-    } else {
-        startGame();
+    if (isPlaying) finishGame("ended");
+    else startGame();
+});
+
+changeNameButton.addEventListener("click", async function () {
+    const nickname = window.prompt("Nhập biệt danh mới (3–30 ký tự):", playerName.textContent);
+    if (nickname === null) return;
+    try {
+        const data = await apiRequest("/players/me", {
+            method: "PATCH",
+            body: JSON.stringify({ nickname })
+        });
+        playerName.textContent = data.nickname;
+        apiMessage.textContent = "Đã cập nhật biệt danh.";
+    } catch (error) {
+        apiMessage.textContent = error.message;
     }
+});
+
+recoverPlayerButton.addEventListener("click", async function () {
+    const code = window.prompt("Nhập mã khôi phục của bạn:");
+    if (code === null || code.trim() === "") return;
+    try {
+        const data = await apiRequest("/players/recover", {
+            method: "POST",
+            body: JSON.stringify({ recoveryCode: code.trim() })
+        }, false);
+        localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+        localStorage.setItem(DEVICE_TOKEN_KEY, data.deviceToken);
+        playerName.textContent = data.nickname;
+        recoveryCard.hidden = true;
+        startButton.disabled = false;
+        changeNameButton.disabled = false;
+        apiMessage.textContent = "Đã khôi phục hồ sơ thành công.";
+        await loadHistory();
+    } catch (error) {
+        apiMessage.textContent = error.message;
+    }
+});
+
+copyRecoveryButton.addEventListener("click", async function () {
+    await navigator.clipboard.writeText(recoveryCode.textContent);
+    copyRecoveryButton.textContent = "Đã sao chép";
 });
 
 document.addEventListener("keydown", function (event) {
     const direction = getDirectionFromKey(event.key);
-
-    if (direction === null) {
-        return;
-    }
-
-    // Ngăn trình duyệt cuộn trang khi người chơi dùng phím mũi tên.
+    if (direction === null) return;
     event.preventDefault();
     moveEmptyTile(direction);
 });
 
-// Vẽ bàn cờ ngay khi trang web vừa được mở.
 renderBoard();
+initializePlayer();

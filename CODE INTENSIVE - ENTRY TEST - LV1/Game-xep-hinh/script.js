@@ -1,4 +1,4 @@
-const API_BASE_URL = localStorage.getItem("puzzleApiUrl") || "http://localhost:8080/api";
+const API_BASE_URL = localStorage.getItem("puzzleApiUrl") || "https://mindx-games-playground.onrender.com/api";
 const DEVICE_TOKEN_KEY = "puzzleDeviceToken";
 const ACCESS_TOKEN_KEY = "puzzleAccessToken";
 
